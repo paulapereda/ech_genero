@@ -1,0 +1,11 @@
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+.Rproj.user
+.DS_Store
+.Renviron
+data/*
+*.dta
+*.sav
+*.rds
