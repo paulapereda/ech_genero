@@ -40,7 +40,8 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
             bc_register2,
             bc_subocupado, 
             bc_subocupado1,
-            horas_trabajadas = f85 + f98) %>% 
+            horas_trabajadas = f85 + f98,
+            estred13) %>% 
   mutate(depto = case_when(
     depto == 1  ~ "Montevideo",
     depto == 2  ~ "Artigas",
@@ -114,7 +115,7 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
     indigente == 0 ~ "No indigente",
     indigente == 1 ~ "Indigente"),
   sexo = case_when(
-    sexo == 1 ~ "Hombre",
+    sexo == 1 ~ "Varón",
     sexo == 2 ~ "Mujer"),
   ascendencia = case_when(
     ascendencia == 1 ~ "Afro o negra",
@@ -196,23 +197,24 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
     bc_subocupado1 == 2  ~ "No" 
   ),
   ipc = case_when(
-    mes == 1 ~ 0.535848248,
-    mes == 2 ~ 0.524466355,
-    mes == 3 ~ 0.519399574,
-    mes == 4 ~ 0.516555607,
-    mes == 5 ~ 0.514350375,
-    mes == 6 ~ 0.512321328,
-    mes == 7 ~ 0.509061291,
-    mes == 8 ~ 0.505203597,
-    mes == 9 ~ 0.500776203,
-    mes == 10 ~ 0.498206457,
-    mes == 11 ~ 0.494486476,
-    mes == 12 ~ 0.492416782,
+    mes == 1 ~  100.00,
+    mes == 2 ~  100.98,
+    mes == 3 ~  101.53,
+    mes == 4 ~  101.97,
+    mes == 5 ~  102.37,
+    mes == 6 ~  103.03,
+    mes == 7 ~  103.81,
+    mes == 8 ~  104.73,
+    mes == 9 ~  105.27,
+    mes == 10 ~ 106.06,
+    mes == 11 ~ 106.51,
+    mes == 12 ~ 106.48,
   ),
-  ingreso_total_hogar_deflactado = ingreso_total_hogar*ipc,
-  ingreso_laboral_deflactado = ingreso_laboral*ipc,
+  ingreso_total_hogar_deflactado = (ingreso_total_hogar/ipc)*100,
+  ingreso_laboral_deflactado = (ingreso_laboral/ipc)*100,
   ingreso_por_hora = ingreso_laboral_deflactado/horas_trabajadas,
-  ingreso_por_hora = ifelse(is.nan(ingreso_por_hora), NA_integer_, ingreso_por_hora))
+  ingreso_por_hora = ifelse(is.nan(ingreso_por_hora), NA_integer_, ingreso_por_hora),
+  id = str_c(numero, sep = "-", nper))
 
 write_rds(ech_2019, "data/ech_2019.rds")  
 
