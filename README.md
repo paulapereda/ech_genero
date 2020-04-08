@@ -4,5 +4,4 @@
 
 Como dijo Taylor Swift:
 
-> I'm so sick of running as fast as I can
-> Wondering if I'd get there quicker if I was a man.
+> I'm so sick of running as fast as I can wondering if I'd get there quicker if I was a man.
