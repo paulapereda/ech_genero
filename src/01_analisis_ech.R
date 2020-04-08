@@ -67,6 +67,7 @@ ech_evolucion <- read_xlsx("data/evolucion_ingresos_salariales.xlsx")
 #   filter(cond_actividad == "Ocupados") %>% 
 #   group_by(sexo) %>% 
 #   summarise(mean = sum(ingreso_laboral_deflactado*exp_anio, na.rm = T)/sum(exp_anio, na.rm = T)) 
+
 ech_evolucion %>% 
   ggplot(aes(Año, total_ingresos_laborales, group = Sexo, color = Sexo)) +
   geom_line() +
@@ -98,7 +99,7 @@ ech_evolucion %>%
   geom_line(color = "#7c2ef0") +
   geom_point(color = "#7c2ef0") +
   xlab("") +
-  scale_y_continuous(limits = c(0, 35))+
+  scale_y_continuous(limits = c(0, 35)) +
   scale_x_continuous(breaks = c(2006, 2008, 2010, 2012, 2014, 2016, 2018)) +
   ylab("Brecha salarial \npor sexo (%)") +
   labs(title = "Evolución de la brecha salarial en Uruguay (2006 - 2018)", 
@@ -220,3 +221,90 @@ ech_2019 %>%
   theme(legend.position = "none",
         axis.title.y = element_text(angle = 0)) +
   ggsave("plots/brecha_salarial_hijos.png", dpi = 550, width = 10)
+
+# 5) Evolución: tasa de actividad, empleo y desempleo
+
+ech_evolucion_tasas <- read_xlsx("data/evolucion_tasas.xlsx") %>% 
+  mutate(label = paste0(round(Valor), "%"))
+
+# Para llegar al .xlsx anterior corrí el siguiente código para el período 2006-2018 ("p6.dta",
+# "p7.dta", ..., "p18.dta") con las bases compatibilizadas por el IECON - FCEA, UdelaR. 
+
+# haven::read_dta("data/p18.dta", col_select = c(bc_anio, bc_pesoan, bc_pe2, bc_pobp)) %>%
+#   labelled::remove_labels() %>% 
+#   filter(!is.na(bc_pesoan)) %>% 
+#   mutate(pea = ifelse(bc_pobp %in% 2:5, 1, 0),
+#          pet = ifelse(bc_pobp != 1, 1, 0),
+#          po = ifelse(bc_pobp == 2, 1, 0),
+#          pd = ifelse(bc_pobp %in% 3:5, 1, 0)) %>% 
+#   transmute(Año = bc_anio,
+#             exp_anio = bc_pesoan,
+#             pea,
+#             pet,
+#             po,
+#             pd,
+#             sexo = case_when(
+#               bc_pe2 == 1 ~ "Varón",
+#               bc_pe2 == 2 ~ "Mujer"),
+#             sexo = factor(sexo, levels = c("Varón", "Mujer"))) %>%
+#   group_by(sexo, Año) %>%
+#   summarise(tasa_actividad = (sum(pea*exp_anio)/sum(pet*exp_anio))*100,
+#             tasa_empleo = (sum(po*exp_anio)/sum(pet*exp_anio))*100,
+#             tasa_desempleo = (sum(pd*exp_anio)/sum(pea*exp_anio))*100) %>% 
+#   pivot_longer(cols = starts_with("tasa"), names_to = "Tasa", values_to = "Valor") %>% 
+#   mutate(label = paste0(round(Valor), "%")) 
+
+ech_evolucion_tasas %>% 
+  filter(Tasa == "tasa_actividad") %>% 
+  ggplot(aes(Año, Valor, group = sexo, color = sexo, label = label)) +
+  geom_line() +
+  geom_point() +
+  geom_text(vjust = 0, nudge_y = 0.5, color = "#2b2b2b", family = "Arial Narrow", size = 3) +
+  scale_color_manual(values = c("Varón" = "#58c1aa", "Mujer" = "#7c2ef0")) +
+  scale_x_continuous(breaks = c(2006, 2008, 2010, 2012, 2014, 2016, 2018)) +
+  xlab("") +
+  ylab("Tasa de \nactividad (%)") +
+  labs(title = "Evolución de la tasa de actividad según sexo: mujeres y varones (2006 - 2018)", 
+       caption = "Fuente: elaboración propia en base a ECH compatibilizadas (IECON - FCEA, UdelaR)
+                 Paula Pereda - @paubgood") +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        axis.title.y = element_text(angle = 0)) +
+  ggsave("plots/evolucion_ta.png", dpi = 550, width = 10)
+
+ech_evolucion_tasas %>% 
+  filter(Tasa == "tasa_empleo") %>% 
+  ggplot(aes(Año, Valor, group = sexo, color = sexo, label = label)) +
+  geom_line() +
+  geom_point() +
+  geom_text(vjust = 0, nudge_y = 0.5, color = "#2b2b2b", family = "Arial Narrow", size = 3) +
+  scale_color_manual(values = c("Varón" = "#58c1aa", "Mujer" = "#7c2ef0")) +
+  scale_x_continuous(breaks = c(2006, 2008, 2010, 2012, 2014, 2016, 2018)) +
+  xlab("") +
+  ylab("Tasa de \nempleo (%)") +
+  labs(title = "Evolución de la tasa de empleo según sexo: mujeres y varones (2006 - 2018)", 
+       caption = "Fuente: elaboración propia en base a ECH compatibilizadas (IECON - FCEA, UdelaR)
+                 Paula Pereda - @paubgood") +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        axis.title.y = element_text(angle = 0)) +
+  ggsave("plots/evolucion_te.png", dpi = 550, width = 10)
+
+ech_evolucion_tasas %>% 
+  filter(Tasa == "tasa_desempleo") %>% 
+  ggplot(aes(Año, Valor, group = sexo, color = sexo, label = label)) +
+  geom_line() +
+  geom_point() +
+  geom_text(vjust = 0, nudge_y = 0.5, color = "#2b2b2b", family = "Arial Narrow", size = 3) +
+  scale_color_manual(values = c("Varón" = "#58c1aa", "Mujer" = "#7c2ef0")) +
+  scale_x_continuous(breaks = c(2006, 2008, 2010, 2012, 2014, 2016, 2018)) +
+  scale_y_continuous(limits = c(0, 15)) +
+  xlab("") +
+  ylab("Tasa de \ndesempleo (%)") +
+  labs(title = "Evolución de la tasa de desempleo según sexo: mujeres y varones (2006 - 2018)", 
+       caption = "Fuente: elaboración propia en base a ECH compatibilizadas (IECON - FCEA, UdelaR)
+                 Paula Pereda - @paubgood") +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        axis.title.y = element_text(angle = 0)) +
+  ggsave("plots/evolucion_td.png", dpi = 550, width = 10)
