@@ -150,6 +150,8 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
    bc_nivel == 4 ~ "Magisterio o Profesorado",
    bc_nivel == 5 ~ "Universidad o similar"
   ),
+  bc_nivel = factor(bc_nivel, levels = c("Sin instrucción", "Primaria", "Secundaria", "Enseñanza técnica o UTU",
+                                         "Magisterio o Profesorado", "Universidad o similar")),
   bc_finalizo = case_when(
     bc_finalizo == 1  ~ "Si",
     bc_finalizo == 2  ~ "No"
@@ -214,7 +216,22 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
   ingreso_laboral_deflactado = (ingreso_laboral/ipc)*100,
   ingreso_por_hora = ingreso_laboral_deflactado/horas_trabajadas,
   ingreso_por_hora = ifelse(is.nan(ingreso_por_hora), NA_integer_, ingreso_por_hora),
-  id = str_c(numero, sep = "-", nper))
+  grupo_etario = case_when(
+    (edad > 17 & edad < 26) ~ "18-25 años",
+    (edad > 25 & edad < 36) ~ "26-35 años",
+    (edad > 35 & edad < 51) ~ "36-50 años",
+    (edad > 50 & edad < 66) ~ "51-65 años",
+    T ~ NA_character_
+  ),
+  grupo_etario = factor(grupo_etario, levels = c("18-25 años", "26-35 años", "36-50 años",
+                                                 "51-65 años"))) %>% 
+  group_by(numero) %>% 
+  mutate(menores = ifelse(any(edad, na.rm = T) < 18, T, F),
+         hijos = ifelse(any(parentesco == "Hijo/a de ambos") |
+                          any(parentesco == "Hijo/a sólo del jefe") |
+                          any(parentesco == "Hijo/a sólo del esposo/a compañero/a"), T, F)) %>% 
+  ungroup() %>% 
+  mutate(hijos_menores = ifelse(menores == T & hijos == T, "Si", "No"))
 
 write_rds(ech_2019, "data/ech_2019.rds")  
 
