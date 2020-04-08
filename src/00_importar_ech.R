@@ -2,13 +2,29 @@ library(tidyverse)
 library(labelled)
 library(haven)
 library(readr)
-library(ech)
+
+# ¡Esto se corre una única vez! :)
+
+# Paso 1: convierto la base de "Hogares y personas" correspondiente a la ECH 2019 a .dta y a .rds
+ech_2019_raw_ine <- read_sav("data/HyP_2019_Terceros.sav") %>% 
+  remove_labels() %>% 
+  write_dta("data/HyP_2019_Terceros.dta", version = 14) %>% 
+  write_rds("data/ech_2019_raw_ine.rds")
+
+# Paso 2: corro "00.1_compatibilizacion_iecon.do" para utilizar variables relativas al mercado 
+# laboral que están "verificadas" y compatibilizadas.
+
+# Paso 3: cargo la base generada en el paso anterior y me quedo únicamente con las variables 
+# de interés
 
 ech_2019_iecon <- read_dta("data/ech_2019_iecon.dta") %>% 
   remove_labels() %>% 
   select(bc_correlat, bc_nper, bc_pesoan, bc_nivel, bc_edu, bc_finalizo, bc_rama, 
          bc_tipo_ocup, bc_horas_hab, bc_reg_disse, bc_register, bc_register2, 
          bc_subocupado, bc_subocupado1)
+
+# Paso 4: cargo la base "cruda" generada en el "Paso 1" y le pego la generada en el "Paso 3",
+# ¡y queda pronta!
 
 ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>% 
   left_join(ech_2019_iecon, by = c("numero" = "bc_correlat", "nper" = "bc_nper")) %>% 
@@ -42,7 +58,11 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
             bc_subocupado1,
             horas_trabajadas = f85 + f98,
             estred13) %>% 
-  mutate(depto = case_when(
+  mutate(pea = ifelse(cond_actividad %in% 2:5, 1, 0),
+         pet = ifelse(cond_actividad != 1, 1, 0),
+         po = ifelse(cond_actividad == 2, 1, 0),
+         pd = ifelse(cond_actividad %in% 3:5, 1, 0),
+  depto = case_when(
     depto == 1  ~ "Montevideo",
     depto == 2  ~ "Artigas",
     depto == 3  ~ "Canelones",
@@ -228,8 +248,8 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
   group_by(numero) %>% 
   mutate(menores = ifelse(any(edad, na.rm = T) < 18, T, F),
          hijos = ifelse(any(parentesco == "Hijo/a de ambos") |
-                          any(parentesco == "Hijo/a sólo del jefe") |
-                          any(parentesco == "Hijo/a sólo del esposo/a compañero/a"), T, F)) %>% 
+                        any(parentesco == "Hijo/a sólo del esposo/a compañero/a"), T, F),
+         jefatura_femenina = ifelse(any(parentesco == "Jefe/a" & sexo == "Mujer"), "Si", "No")) %>% 
   ungroup() %>% 
   mutate(hijos_menores = ifelse(menores == T & hijos == T, "Si", "No"))
 

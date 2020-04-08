@@ -6,5 +6,7 @@
 .DS_Store
 .Renviron
 *.dta
+*.sav
 data/codiguera_ciiu.rds
 data/ech_2019_raw_ine.rds
+data/ech_2019.rds
