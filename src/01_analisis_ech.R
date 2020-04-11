@@ -308,3 +308,21 @@ ech_evolucion_tasas %>%
   theme(legend.position = "none",
         axis.title.y = element_text(angle = 0)) +
   ggsave("plots/evolucion_td.png", dpi = 550, width = 10)
+
+# Extras:
+
+## Tasas por departamento:
+
+ech_2019 %>% 
+  group_by(sexo, depto) %>%
+  summarise(tasa_actividad = (sum(pea*exp_anio)/sum(pet*exp_anio))*100,
+            tasa_empleo = (sum(po*exp_anio)/sum(pet*exp_anio))*100,
+            tasa_desempleo = (sum(pd*exp_anio)/sum(pea*exp_anio))*100) %>% 
+  pivot_longer(cols = starts_with("tasa"), names_to = "Tasa", values_to = "Valor") %>% 
+  spread(Tasa, Valor) %>% 
+  arrange(depto, sexo) %>% 
+  transmute(Departamento = depto,
+            Sexo = sexo, 
+            "Tasa de actividad" = paste0(round(tasa_actividad), "%"),
+            "Tasa de empleo" = paste0(round(tasa_empleo), "%"),
+            "Tasa de desempleo" = paste0(round(tasa_desempleo), "%")) 
