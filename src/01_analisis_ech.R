@@ -311,7 +311,7 @@ ech_evolucion_tasas %>%
 
 # Extras:
 
-## Tasas por departamento:
+## (i) Tasas por departamento:
 
 ech_2019 %>% 
   group_by(sexo, depto) %>%
@@ -326,3 +326,50 @@ ech_2019 %>%
             "Tasa de actividad" = paste0(round(tasa_actividad), "%"),
             "Tasa de empleo" = paste0(round(tasa_empleo), "%"),
             "Tasa de desempleo" = paste0(round(tasa_desempleo), "%")) 
+
+## (ii) Sector IT:
+
+ech_it <- ech_2019 %>% 
+  mutate(it = case_when(
+    clase == "2610" ~ "TI",
+    clase == "2620" ~ "TI",
+    clase == "2630" ~ "TI",
+    clase == "2640" ~ "TI",
+    clase == "2680" ~ "TI",
+    clase == "4651" ~ "TI",
+    clase == "4652" ~ "TI",
+    clase == "5820" ~ "TI",
+    clase == "6110" ~ "TI",
+    clase == "6120" ~ "TI",
+    clase == "6130" ~ "TI",
+    clase == "6190" ~ "TI",
+    clase == "6201" ~ "TI",
+    clase == "6202" ~ "TI",
+    clase == "6209" ~ "TI",
+    clase == "6311" ~ "TI",
+    clase == "6312" ~ "TI",
+    clase == "9511" ~ "TI",
+    clase == "9512" ~ "TI",
+    T ~ "Demás sectores"))
+
+ech_it %>% 
+  filter(it == "TI") %>% 
+  distinct(clase, desc_ciiu)
+
+ech_it %>%
+  filter(!is.na(grupo_etario)) %>% 
+  filter(cond_actividad == "Ocupados") %>%  
+  group_by(sexo, it) %>% 
+  summarise(mean = sum(ingreso_por_hora*exp_anio, na.rm = T)/sum(exp_anio, na.rm = T)) %>% 
+  spread(sexo, mean) %>% 
+  mutate(Brecha = paste0(round((1 - Mujer/Varón)*100), "%"))
+
+  ech_it %>%
+    filter(!is.na(grupo_etario)) %>%
+    filter(cond_actividad == "Ocupados") %>%
+    group_by(sexo, it, grupo_etario) %>%
+    summarise(mean = sum(ingreso_por_hora * exp_anio, na.rm = T)/sum(exp_anio, na.rm = T)) %>%
+    spread(sexo, mean) %>%
+    mutate(Brecha = paste0(round((1 - Mujer / Varón) * 100), "%")) %>% 
+    arrange(grupo_etario, it)
+  

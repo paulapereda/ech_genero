@@ -23,14 +23,17 @@ ech_2019_iecon <- read_dta("data/ech_2019_iecon.dta") %>%
          bc_tipo_ocup, bc_horas_hab, bc_reg_disse, bc_register, bc_register2, 
          bc_subocupado, bc_subocupado1)
 
-# Paso 4: cargo la base "cruda" generada en el "Paso 1" y le pego la generada en el "Paso 3",
-# ¡y queda pronta!
+# Paso 4: cargo la base "cruda" generada en el "Paso 1" y le pego la generada en el "Paso 3" y 
+# las descripciones de sectores, ¡y queda pronta!
+
+codiguera_ciiu <- read_rds("data/codiguera_ciiu.rds")
 
 ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>% 
   left_join(ech_2019_iecon, by = c("numero" = "bc_correlat", "nper" = "bc_nper")) %>% 
   transmute(numero, 
             nper,
             mes,
+            ciiu = f72_2,
             depto = dpto, 
             region = region_3, 
             exp_anio = pesoano,
@@ -58,6 +61,9 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
             bc_subocupado1,
             horas_trabajadas = f85 + f98,
             estred13) %>% 
+  mutate(clase = as.character(ciiu)) %>% 
+  select(- ciiu) %>% 
+  left_join(select(codiguera_ciiu, ciiu, desc_ciiu, seccion, desc_seccion), by = c("clase" = "ciiu")) %>%
   mutate(pea = ifelse(cond_actividad %in% 2:5, 1, 0),
          pet = ifelse(cond_actividad != 1, 1, 0),
          po = ifelse(cond_actividad == 2, 1, 0),
@@ -251,7 +257,8 @@ ech_2019 <- readRDS("~/ech_genero/data/ech_2019_raw_ine.rds") %>%
                         any(parentesco == "Hijo/a sólo del esposo/a compañero/a"), T, F),
          jefatura_femenina = ifelse(any(parentesco == "Jefe/a" & sexo == "Mujer"), "Si", "No")) %>% 
   ungroup() %>% 
-  mutate(hijos_menores = ifelse(menores == T & hijos == T, "Si", "No"))
+  mutate(hijos_menores = ifelse(menores == T & hijos == T, "Si", "No"),
+         clase = ifelse(clase == "   .", NA_character_, clase))
 
 write_rds(ech_2019, "data/ech_2019.rds")  
 
